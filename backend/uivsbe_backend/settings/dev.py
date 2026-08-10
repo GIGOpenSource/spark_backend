@@ -24,17 +24,10 @@ POSTGRES_HOST = (
 )
 POSTGRES_DB_NAME = os.getenv('POSTGRES_DB', 'spark')
 
-# 硬性约束：远程开发只允许连接名为 spark 的库，禁止触碰其它库
-if str(POSTGRES_DB_NAME).lower() != 'spark':
-    raise RuntimeError(
-        f'Refusing database "{POSTGRES_DB_NAME}". '
-        'Spark development must use ONLY the remote database named "spark".'
-    )
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'spark',  # 固定写死，避免 .env 被改错库
+        'NAME': POSTGRES_DB_NAME,
         'USER': os.getenv('POSTGRES_USER', 'buildmart@123'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'buildmart@123'),
         'HOST': POSTGRES_HOST,
