@@ -1,6 +1,6 @@
 networks:
-  spark_net:
-    name: spark_net
+  buildmart_net:
+    name: buildmart_net
 
 volumes:
   pgdata:
@@ -30,38 +30,78 @@ services:
 
   db:
     image: postgres:16-alpine
-    container_name: spark_db
+    container_name: buildmart_db
     environment:
-      - POSTGRES_DB=uivsbe
-      - POSTGRES_USER=buildmart@123
-      - POSTGRES_PASSWORD=buildmart@123
+      - POSTGRES_DB=spark
+      - POSTGRES_USER=spark
+      - POSTGRES_PASSWORD=spark123
       - PGDATA=/var/lib/postgresql/data/pgdata
     ports:
       - "55432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
-      - spark_net
+      - buildmart_net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U 'buildmart@123' -d uivsbe"]
+      test: ["CMD-SHELL", "pg_isready -U spark -d spark"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   redis:
     image: redis:7-alpine
-    container_name: spark_redis
-    command: redis-server --requirepass buildmart@123
+    container_name: buildmart_redis
+    command: redis-server --requirepass spark@0810
     ports:
       - "6390:6379"
     volumes:
       - redisdata:/data
     networks:
-      - spark_net
+      - buildmart_net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "buildmart@123", "ping"]
+      test: ["CMD", "redis-cli", "-a", "spark@0810", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: buildmart_backend
+    environment:
+      - POSTGRES_DB=spark
+      - POSTGRES_USER=spark
+      - POSTGRES_PASSWORD=spark123
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - DB_HOST=db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=spark@0810
+      - ALLOWED_HOSTS=34.176.174.142,localhost,127.0.0.1
+      - DJANGO_SETTINGS_MODULE=uivsbe_backend.settings.pro
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./media:/app/media
+    networks:
+      - buildmart_net
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Running migrations..."
+        python manage.py migrate --noinput
+        echo "Collecting static files..."
+        python manage.py collectstatic --noinput
+        echo "Starting server..."
+        exec gunicorn uivsbe_backend.wsgi:application -b 0.0.0.0:8000 -w 2 --timeout 120
