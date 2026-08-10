@@ -86,4 +86,4 @@ htmlcov/
 
 # ==================== Docker ====================
 *.local.yml
-uivsbe_env/
+uivsbe_env/backend/env.server
