@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+import os
 import redis
 import uuid
 from django.conf import settings
@@ -8,12 +9,13 @@ class CustomTokenTool:
     """
     Token 工具类：基于 Redis 存储，支持生成、验证、删除 Token，设置 3600 秒过期
     """
-    # 初始化 Redis 连接（从配置或硬编码获取连接信息）
+    # 初始化 Redis 连接（从环境变量读取）
     _redis = redis.Redis(
-        host='192.168.77.222',  # 你的 Redis 主机
-        port=6378,               # 你的 Redis 端口
-        db=0,                    # 使用默认数据库
-        decode_responses=True    # 自动将返回值解码为字符串（避免 bytes 类型问题）
+        host=os.getenv('REDIS_HOST', 'localhost'),
+        port=int(os.getenv('REDIS_PORT', 6379)),
+        password=os.getenv('REDIS_PASSWORD', ''),
+        db=int(os.getenv('REDIS_DB', 0)),
+        decode_responses=True
     )
     _EXPIRE_SECONDS = 3600     # Token 有效期：3600 秒（1 小时）
 
