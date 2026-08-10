@@ -1,0 +1,391 @@
+:root {
+  /* brand / chrome */
+  --pro-primary: #FF4B55;
+  --pro-sider-bg: #001529;
+  --pro-sider-width: 208px;
+  --pro-sider-collapsed: 64px;
+  --pro-header-height: 48px;
+  --pro-menu-item-height: 40px;
+  --pro-body-bg: #f0f2f5;
+  --pro-border: #f0f0f0;
+  --pro-text: rgba(0, 0, 0, 0.88);
+  --pro-text-secondary: rgba(0, 0, 0, 0.45);
+  --pro-radius: 8px;
+  --pro-radius-sm: 6px;
+
+  /* spacing scale */
+  --pro-space-xs: 4px;
+  --pro-space-sm: 8px;
+  --pro-space-md: 12px;
+  --pro-space-lg: 16px;
+  --pro-space-xl: 24px;
+
+  /* typography */
+  --pro-font-xs: 12px;
+  --pro-font-sm: 13px;
+  --pro-font-md: 14px;
+  --pro-font-lg: 16px;
+  --pro-font-title: 20px;
+  --pro-font-kpi: 24px;
+  --pro-line-title: 28px;
+
+  /* page chrome */
+  --pro-content-pad-y: 16px;
+  --pro-content-pad-x: 24px;
+  --pro-page-body-pad: 24px;
+
+  /* controls */
+  --pro-control-xs: 110px;
+  --pro-control-sm: 140px;
+  --pro-control-md: 160px;
+  --pro-control-lg: 220px;
+  --pro-control-xl: 280px;
+  --pro-label-width: 120px;
+  --pro-label-width-wide: 160px;
+  --pro-form-max: 560px;
+  --pro-dialog-sm: 480px;
+  --pro-dialog-md: 520px;
+  --pro-col-id: 72px;
+  --pro-toolbar-gap: 8px;
+  --pro-toolbar-mb: 12px;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  font-size: var(--pro-font-md);
+  color: var(--pro-text);
+  background: var(--pro-body-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* —— Layout chrome —— */
+.pro-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--pro-body-bg);
+}
+
+.pro-sider {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  width: var(--pro-sider-width);
+  background: var(--pro-sider-bg);
+  transition: width 0.2s;
+  overflow: hidden;
+}
+
+.pro-sider.is-collapsed {
+  width: var(--pro-sider-collapsed);
+}
+
+.pro-sider-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--pro-header-height);
+  padding: 0 var(--pro-space-lg);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.pro-logo-mark {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--pro-radius-sm);
+  background: linear-gradient(135deg, var(--pro-primary), #ff7a45);
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--pro-font-lg);
+}
+
+.pro-sider-brand-text {
+  color: #fff;
+  font-size: var(--pro-font-lg);
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.pro-sider.is-collapsed .pro-sider-brand-text {
+  opacity: 0;
+  width: 0;
+}
+
+.pro-sider-menu {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: none !important;
+}
+
+.pro-sider-menu .el-menu-item,
+.pro-sider-menu .el-sub-menu__title {
+  height: var(--pro-menu-item-height);
+  line-height: var(--pro-menu-item-height);
+  margin: var(--pro-space-xs) var(--pro-space-sm);
+  border-radius: var(--pro-radius-sm);
+  width: auto !important;
+}
+
+.pro-sider-menu .el-menu-item.is-active {
+  background: var(--pro-primary) !important;
+  color: #fff !important;
+}
+
+.pro-menu-group-title {
+  padding: var(--pro-space-lg) var(--pro-space-xl) var(--pro-space-sm);
+  font-size: var(--pro-font-xs);
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+}
+
+.pro-sider.is-collapsed .pro-menu-group-title {
+  display: none;
+}
+
+.pro-layout-main {
+  flex: 1;
+  margin-left: var(--pro-sider-width);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left 0.2s;
+}
+
+.pro-layout-main.is-collapsed {
+  margin-left: var(--pro-sider-collapsed);
+}
+
+.pro-header {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--pro-header-height);
+  padding: 0 var(--pro-space-lg);
+  background: #fff;
+  border-bottom: 1px solid var(--pro-border);
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+}
+
+.pro-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--pro-space-md);
+  min-width: 0;
+}
+
+.pro-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--pro-space-md);
+  flex-shrink: 0;
+}
+
+.pro-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--pro-radius-sm);
+  background: transparent;
+  color: var(--pro-text);
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.pro-collapse-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.pro-env-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 var(--pro-space-sm);
+  border-radius: 4px;
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+  color: #389e0d;
+  font-size: var(--pro-font-xs);
+  line-height: 1;
+}
+
+.pro-content {
+  flex: 1;
+  padding: var(--pro-content-pad-y) var(--pro-content-pad-x) var(--pro-space-xl);
+}
+
+/* —— Page shell —— */
+.pro-page {
+  min-height: 100%;
+}
+
+.pro-page-header {
+  margin: calc(-1 * var(--pro-content-pad-y)) calc(-1 * var(--pro-content-pad-x)) var(--pro-space-lg);
+  padding: var(--pro-space-lg) var(--pro-content-pad-x);
+  background: #fff;
+  border-bottom: 1px solid var(--pro-border);
+}
+
+.pro-page-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--pro-space-lg);
+}
+
+.pro-page-extra {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--pro-toolbar-gap);
+  flex-shrink: 0;
+}
+
+.pro-page-title {
+  margin: 0;
+  font-size: var(--pro-font-title);
+  font-weight: 600;
+  line-height: var(--pro-line-title);
+  color: var(--pro-text);
+}
+
+.pro-page-subtitle {
+  margin: var(--pro-space-xs) 0 0;
+  font-size: var(--pro-font-md);
+  color: var(--pro-text-secondary);
+  line-height: 1.5;
+}
+
+.pro-page-body {
+  background: #fff;
+  border-radius: var(--pro-radius);
+  padding: var(--pro-page-body-pad);
+}
+
+.pro-page-body.is-ghost {
+  background: transparent;
+  padding: 0;
+}
+
+/* —— Shared page utilities —— */
+.pro-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--pro-toolbar-gap);
+  margin-bottom: var(--pro-toolbar-mb);
+}
+
+.pro-toolbar.is-end {
+  justify-content: flex-end;
+}
+
+.pro-form {
+  max-width: var(--pro-form-max);
+}
+
+.pro-form-wide {
+  max-width: 640px;
+}
+
+.pro-hint {
+  margin: 0 0 var(--pro-toolbar-mb);
+  color: var(--pro-text-secondary);
+  font-size: var(--pro-font-sm);
+  line-height: 1.5;
+}
+
+.pro-meta {
+  margin-top: var(--pro-space-md);
+  color: var(--pro-text-secondary);
+  font-size: var(--pro-font-sm);
+}
+
+.pro-empty {
+  margin-top: var(--pro-space-xl);
+  color: var(--pro-text-secondary);
+  font-size: var(--pro-font-md);
+}
+
+.pro-section-gap {
+  margin-top: var(--pro-space-xl);
+}
+
+.pro-control-xs { width: var(--pro-control-xs) !important; }
+.pro-control-sm { width: var(--pro-control-sm) !important; }
+.pro-control-md { width: var(--pro-control-md) !important; }
+.pro-control-lg { width: var(--pro-control-lg) !important; }
+.pro-control-xl { width: var(--pro-control-xl) !important; }
+
+/* —— Login —— */
+.pro-login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--pro-space-xl);
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(255, 75, 85, 0.25), transparent 45%),
+    radial-gradient(ellipse at 80% 80%, rgba(24, 144, 255, 0.2), transparent 40%),
+    linear-gradient(135deg, #001529 0%, #0a2744 55%, #112a45 100%);
+}
+
+.pro-login-card {
+  width: min(400px, 100%);
+  padding: 40px 36px 32px;
+  background: #fff;
+  border-radius: var(--pro-radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.pro-login-brand {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.pro-login-brand .pro-logo-mark {
+  width: 44px;
+  height: 44px;
+  font-size: var(--pro-font-title);
+  margin: 0 auto var(--pro-space-md);
+}
+
+.pro-login-brand h1 {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.pro-login-brand p {
+  margin: 0;
+  color: var(--pro-text-secondary);
+  font-size: var(--pro-font-md);
+}
+
+.pro-login-hint {
+  margin: var(--pro-space-lg) 0 0;
+  text-align: center;
+  font-size: var(--pro-font-xs);
+  color: var(--pro-text-secondary);
+}

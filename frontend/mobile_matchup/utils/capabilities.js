@@ -1,0 +1,311 @@
+/**
+ * Native capability bridges — pass real store/OAuth fields when available,
+ * fall back cleanly without inventing fake Apple/Google SDKs.
+ */
+import { USE_IAP_MOCK, USE_FIREBASE_MOCK } from '@/config/config.js'
+
+export function detectStorePlatform() {
+	try {
+		const sys = uni.getSystemInfoSync() || {}
+		const p = String(sys.platform || '').toLowerCase()
+		if (p === 'ios') return 'ios'
+		if (p === 'android') return 'android'
+		const uniP = String(sys.uniPlatform || '').toLowerCase()
+		if (uniP === 'app' || uniP === 'app-plus') {
+			return p === 'ios' ? 'ios' : 'android'
+		}
+	} catch (e) {}
+	return 'mock'
+}
+
+export function bootstrapFeatures() {
+	const boot = uni.getStorageSync('bootstrap') || {}
+	return boot.features || {}
+}
+
+export function isIapMock() {
+	const f = bootstrapFeatures()
+	if (typeof f.iap_mock === 'boolean') return f.iap_mock
+	return !!USE_IAP_MOCK
+}
+
+export function isFirebaseMock() {
+	const f = bootstrapFeatures()
+	if (typeof f.firebase_mock === 'boolean') return f.firebase_mock
+	return !!USE_FIREBASE_MOCK
+}
+
+export function isSmsMock() {
+	const f = bootstrapFeatures()
+	if (typeof f.sms_mock === 'boolean') return f.sms_mock
+	return !f.sms_configured && !f.twilio_sms_configured
+}
+
+export function isAppleSignInConfigured() {
+	const f = bootstrapFeatures()
+	if (typeof f.apple_signin_configured === 'boolean') return f.apple_signin_configured
+	if (typeof f.apple_configured === 'boolean') return f.apple_configured
+	return false
+}
+
+/**
+ * Attempt native IAP. Returns purchase payload fields for POST /vip/purchase/.
+ * Does not invent store calls — only uses plus.payment / uni plugins when present.
+ */
+export function requestNativePurchase(productId) {
+	return new Promise((resolve) => {
+		const platform = detectStorePlatform()
+		if (platform === 'mock' || isIapMock()) {
+			resolve({
+				ok: true,
+				platform: 'mock',
+				product_id: productId,
+				transaction_id: `mock_${Date.now()}`,
+			})
+			return
+		}
+
+		// #ifdef APP-PLUS
+		try {
+			if (typeof plus !== 'undefined' && plus.payment) {
+				const channelId = platform === 'ios' ? 'appleiap' : 'google-iap'
+				plus.payment.getChannels((channels) => {
+					const ch = (channels || []).find((c) => c.id === channelId)
+					if (!ch) {
+						resolve({
+							ok: false,
+							error: 'store_channel_unavailable',
+							platform,
+							product_id: productId,
+						})
+						return
+					}
+					plus.payment.request(ch, { productid: productId }, (result) => {
+						const tid = (result && (result.transactionIdentifier || result.transaction_id)) || ''
+						const token = (result && (result.purchaseToken || result.token || result.purchase_token)) || ''
+						resolve({
+							ok: true,
+							platform,
+							product_id: productId,
+							transaction_id: tid || undefined,
+							purchase_token: token || undefined,
+							subscription: /_(1|6|12)m$/.test(productId),
+							raw: result,
+						})
+					}, (err) => {
+						resolve({
+							ok: false,
+							error: (err && (err.message || err.code)) || 'purchase_cancelled',
+							platform,
+							product_id: productId,
+						})
+					})
+				}, () => {
+					resolve({
+						ok: false,
+						error: 'payment_channels_failed',
+						platform,
+						product_id: productId,
+					})
+				})
+				return
+			}
+		} catch (e) {
+			resolve({
+				ok: false,
+				error: (e && e.message) || 'native_iap_error',
+				platform,
+				product_id: productId,
+			})
+			return
+		}
+		// #endif
+
+		resolve({
+			ok: false,
+			error: 'native_iap_unavailable',
+			platform,
+			product_id: productId,
+		})
+	})
+}
+
+function mapRestoreResult(result, platform) {
+	const tid = (result && (result.transactionIdentifier || result.transaction_id || result.transactionId)) || ''
+	const token = (result && (result.purchaseToken || result.token || result.purchase_token)) || ''
+	const productId = (result && (result.productid || result.productId || result.product_id)) || ''
+	if (!tid && !token && !productId) return null
+	return {
+		product_id: productId || undefined,
+		transaction_id: tid || undefined,
+		purchase_token: token || undefined,
+		platform,
+	}
+}
+
+/**
+ * Collect restored receipts from native store if available.
+ */
+export function requestNativeRestoreReceipts() {
+	return new Promise((resolve) => {
+		const platform = detectStorePlatform()
+		if (platform === 'mock' || isIapMock()) {
+			resolve([])
+			return
+		}
+
+		// #ifdef APP-PLUS
+		try {
+			if (typeof plus !== 'undefined' && plus.payment) {
+				const channelId = platform === 'ios' ? 'appleiap' : 'google-iap'
+				plus.payment.getChannels((channels) => {
+					const ch = (channels || []).find((c) => c.id === channelId)
+					if (!ch) {
+						resolve([])
+						return
+					}
+					const receipts = []
+					const finish = () => resolve(receipts)
+
+					if (typeof ch.restoreComplateRequest === 'function') {
+						ch.restoreComplateRequest({}, (results) => {
+							;(results || []).forEach((r) => {
+								const mapped = mapRestoreResult(r, platform)
+								if (mapped) receipts.push(mapped)
+							})
+							finish()
+						}, () => finish())
+						return
+					}
+					if (typeof plus.payment.restoreCompletedTransactions === 'function') {
+						plus.payment.restoreCompletedTransactions(ch, (results) => {
+							;(results || []).forEach((r) => {
+								const mapped = mapRestoreResult(r, platform)
+								if (mapped) receipts.push(mapped)
+							})
+							finish()
+						}, () => finish())
+						return
+					}
+					// Android / channel restore hook when present
+					if (typeof ch.restore === 'function') {
+						ch.restore((results) => {
+							;(results || []).forEach((r) => {
+								const mapped = mapRestoreResult(r, platform)
+								if (mapped) receipts.push(mapped)
+							})
+							finish()
+						}, () => finish())
+						return
+					}
+					finish()
+				}, () => resolve([]))
+				return
+			}
+		} catch (e) {
+			resolve([])
+			return
+		}
+		// #endif
+
+		resolve([])
+	})
+}
+
+/**
+ * Try to obtain an Apple identity token from a native bridge if registered.
+ * Register via: uni.$sparkAppleGetIdentityToken = () => Promise<string>
+ */
+export async function getAppleIdentityToken() {
+	try {
+		if (typeof uni !== 'undefined' && typeof uni.$sparkAppleGetIdentityToken === 'function') {
+			const t = await uni.$sparkAppleGetIdentityToken()
+			if (t && typeof t === 'string') return t
+		}
+	} catch (e) {}
+	// #ifdef APP-PLUS
+	try {
+		const cached = uni.getStorageSync('apple_identity_token_cache')
+		if (cached && typeof cached === 'string') return cached
+	} catch (e) {}
+	try {
+		const token = await new Promise((resolve) => {
+			uni.login({
+				provider: 'apple',
+				success: (res) => {
+					const t = (res && (res.authResult && (res.authResult.id_token || res.authResult.identityToken)))
+						|| (res && (res.id_token || res.identityToken))
+						|| ''
+					resolve(typeof t === 'string' ? t : '')
+				},
+				fail: () => resolve(''),
+			})
+		})
+		if (token) return token
+	} catch (e) {}
+	// #endif
+	return ''
+}
+
+/**
+ * Try to obtain a Google ID token from a native bridge if one was registered.
+ * Register via: uni.$sparkGoogleGetIdToken = () => Promise<string>
+ */
+export async function getGoogleIdToken() {
+	try {
+		if (typeof uni !== 'undefined' && typeof uni.$sparkGoogleGetIdToken === 'function') {
+			const t = await uni.$sparkGoogleGetIdToken()
+			if (t && typeof t === 'string') return t
+		}
+	} catch (e) {}
+	// #ifdef APP-PLUS
+	try {
+		const g = uni.getStorageSync('google_id_token_cache')
+		if (g && typeof g === 'string') return g
+	} catch (e) {}
+	try {
+		const token = await new Promise((resolve) => {
+			uni.login({
+				provider: 'google',
+				success: (res) => {
+					const t = (res && (res.authResult && (res.authResult.id_token || res.authResult.idToken)))
+						|| (res && (res.id_token || res.idToken))
+						|| ''
+					resolve(typeof t === 'string' ? t : '')
+				},
+				fail: () => resolve(''),
+			})
+		})
+		if (token) return token
+	} catch (e) {}
+	// #endif
+	return ''
+}
+
+export function openManageSubscriptions() {
+	const platform = detectStorePlatform()
+	let url = ''
+	if (platform === 'ios') {
+		url = 'itms-apps://apps.apple.com/account/subscriptions'
+	} else if (platform === 'android') {
+		url = 'https://play.google.com/store/account/subscriptions'
+	} else {
+		url = 'https://apps.apple.com/account/subscriptions'
+	}
+	// #ifdef H5
+	if (typeof window !== 'undefined') {
+		window.open(url, '_blank')
+		return
+	}
+	// #endif
+	// #ifdef APP-PLUS
+	try {
+		if (typeof plus !== 'undefined' && plus.runtime && plus.runtime.openURL) {
+			plus.runtime.openURL(url)
+			return
+		}
+	} catch (e) {}
+	// #endif
+	uni.setClipboardData({ data: url })
+	uni.showToast({ title: '订阅管理链接已复制', icon: 'none' })
+}

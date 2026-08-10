@@ -1,0 +1,48 @@
+networks:
+  spark_net:
+    name: spark_net
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: spark_db
+    environment:
+      - POSTGRES_DB=uivsbe
+      - POSTGRES_USER=buildmart@123
+      - POSTGRES_PASSWORD=buildmart@123
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "55432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - spark_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U 'buildmart@123' -d uivsbe"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: spark_redis
+    command: redis-server --requirepass buildmart@123
+    ports:
+      - "6390:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - spark_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "buildmart@123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
