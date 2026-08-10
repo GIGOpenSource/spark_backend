@@ -9,9 +9,9 @@ volumes:
     driver: local
 
 services:
-  web:
+  backend:
     build: .
-    container_name: spark_web
+    container_name: spark_backend
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
