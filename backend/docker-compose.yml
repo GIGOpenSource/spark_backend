@@ -30,7 +30,7 @@ services:
       dockerfile: Dockerfile
     container_name: buildmart_backend
     env_file:
-      - env.server
+      - .env
     volumes:
       - .:/app
       - ./media:/app/media
