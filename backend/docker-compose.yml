@@ -65,7 +65,7 @@ services:
       - ALLOWED_HOSTS=34.176.174.142,localhost,127.0.0.1
       - DJANGO_SETTINGS_MODULE=uivsbe_backend.settings.pro
     ports:
-      - "8000:8000"
+      - "80:8000"
     volumes:
       - .:/app
       - ./media:/app/media
