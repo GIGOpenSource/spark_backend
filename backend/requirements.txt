@@ -42,3 +42,4 @@ PyJWT>=2.8.0
 google-auth>=2.29.0
 # Optional: Agora RTC token (video calls). Without it, USE_AGORA_MOCK or agora_not_configured.
 agora-token-builder>=1.0.0; python_version >= "3.8"
+gunicorn>=22.0.0

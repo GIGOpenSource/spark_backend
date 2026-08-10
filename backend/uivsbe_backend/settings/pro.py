@@ -62,6 +62,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     "Apps",
     "models",
+    'django.contrib.staticfiles',
     'rest_framework',
     'drf_spectacular',
     'drf_spectacular_sidecar',
