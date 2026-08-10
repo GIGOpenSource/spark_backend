@@ -26,8 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # 工作目录+安装Python依赖+复制代码（原有逻辑不变）
 WORKDIR /app
-COPY req.txt .
-RUN pip install --no-cache-dir -r req.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 暴露端口（仅容器内，无宿主机映射）
