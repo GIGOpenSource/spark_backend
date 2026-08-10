@@ -45,10 +45,10 @@ local_settings.py
 # **/migrations/
 
 # ==================== Secrets / Environment ====================
-backend/.env
+.env
 .env.local
 .env.*.local
-backend/.env
+.env
 *.env
 !.env.example
 *.key
