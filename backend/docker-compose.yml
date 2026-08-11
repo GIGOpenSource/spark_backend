@@ -48,7 +48,7 @@ services:
         echo "Collecting static files..."
         python manage.py collectstatic --noinput
         echo "Starting server..."
-        exec gunicorn uivsbe_backend.wsgi:application -b 0.0.0.0:8000 -w 2 --timeout 120
+        exec gunicorn uivsbe_backend.wsgi:application -b 0.0.0.0:8000 -w 4 --timeout 120
 
   nginx:
     image: nginx:1.27-alpine
