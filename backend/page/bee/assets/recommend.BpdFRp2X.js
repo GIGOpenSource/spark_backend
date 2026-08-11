@@ -1,0 +1,1 @@
+import{aw as n,ax as e}from"./index-DjxJFA6B.js";function o(e={}){return n("/recommend/feed/",e,{showLoading:!1})}function r(n){return e("/recommend/swipe/",n,{showLoading:!1})}function a(){return e("/recommend/rewind/",{})}export{o as a,a as b,r as c};

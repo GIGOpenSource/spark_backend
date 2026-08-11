@@ -1,0 +1,1 @@
+import{ay as n,az as e}from"./index-CEWgL7v6.js";function o(e={}){return n("/recommend/feed/",e,{showLoading:!1})}function r(n){return e("/recommend/swipe/",n,{showLoading:!1})}function a(){return e("/recommend/rewind/",{})}export{o as a,r as b,a as c};
