@@ -56,10 +56,12 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
     networks:
       - buildmart_net
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ./page:/usr/share/nginx/html:ro
+      - ./page/cert:/etc/nginx/cert:ro
     depends_on:
       - backend
